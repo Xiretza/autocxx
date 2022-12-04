@@ -18,6 +18,7 @@ enum Behavior {
     CxxContainerPtr,
     CxxContainerVector,
     CxxString,
+    CxxWString,
     RustStr,
     RustString,
     RustByValue,
@@ -209,9 +210,10 @@ impl TypeDatabase {
                         | Behavior::CVariableLengthByValue
                         | Behavior::CChar16
                         | Behavior::RustContainerByValueSafe => true,
-                        Behavior::CxxString | Behavior::CxxContainerVector | Behavior::CVoid => {
-                            false
-                        }
+                        Behavior::CxxString
+                        | Behavior::CxxWString
+                        | Behavior::CxxContainerVector
+                        | Behavior::CVoid => false,
                     },
                 )
             })
@@ -335,6 +337,12 @@ impl TypeDatabase {
             .unwrap_or(false)
     }
 
+    pub(crate) fn convertible_from_wstrs(&self, ty: &QualifiedName) -> bool {
+        self.get(ty)
+            .map(|x| matches!(x.behavior, Behavior::CxxWString))
+            .unwrap_or(false)
+    }
+
     fn insert(&mut self, td: TypeDetails) {
         let rs_name = td.to_typename();
         if let Some(extra_non_canonical_name) = &td.extra_non_canonical_name {
@@ -355,7 +363,7 @@ impl TypeDatabase {
             .filter(|tn| {
                 !matches!(
                     self.get(tn).unwrap().behavior,
-                    Behavior::CxxString | Behavior::CxxContainerVector
+                    Behavior::CxxString | Behavior::CxxWString | Behavior::CxxContainerVector
                 )
             })
             .cloned()
@@ -407,7 +415,7 @@ fn create_type_database() -> TypeDatabase {
     db.insert(TypeDetails::new(
         "cxx::CxxWString",
         "std::wstring",
-        Behavior::CxxString,
+        Behavior::CxxWString,
         None,
         true,
         true,

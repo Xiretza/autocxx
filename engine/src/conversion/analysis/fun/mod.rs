@@ -1832,6 +1832,14 @@ impl<'a> FnAnalyzer<'a> {
                         CppConversionType::FromUniquePtrToValue,
                         RustConversionType::FromStr,
                     )
+                } else if known_types().convertible_from_wstrs(&tn)
+                    && !self.config.exclude_utilities()
+                {
+                    TypeConversionPolicy::new(
+                        ty,
+                        CppConversionType::FromUniquePtrToValue,
+                        RustConversionType::FromWStr,
+                    )
                 } else if matches!(
                     sophistication,
                     TypeConversionSophistication::SimpleForSubclasses
